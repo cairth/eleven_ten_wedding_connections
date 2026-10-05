@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
 <title>Connections</title>
 <style>
   :root {
@@ -19,6 +22,8 @@
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
   html, body {
     margin: 0;
     padding: 0;
@@ -31,8 +36,9 @@
   .app {
     max-width: 500px;
     margin: 0 auto;
-    padding: 16px 16px 40px;
+    padding: 16px max(16px, env(safe-area-inset-right)) max(40px, calc(env(safe-area-inset-bottom) + 24px)) max(16px, env(safe-area-inset-left));
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -47,7 +53,7 @@
   h1 {
     font-family: Georgia, 'Times New Roman', serif;
     font-weight: 700;
-    font-size: 34px;
+    font-size: clamp(28px, 8vw, 34px);
     margin: 6px 0 2px;
     letter-spacing: 0.5px;
   }
@@ -122,11 +128,17 @@
     justify-content: center;
     text-align: center;
     font-weight: 700;
-    font-size: 13.5px;
+    font-size: clamp(10px, 3vw, 15px);
     line-height: 1.2;
-    padding: 6px;
+    padding: 4px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    hyphens: auto;
     cursor: pointer;
     user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    touch-action: manipulation;
     border: 2px solid transparent;
     transition: background 0.15s ease, transform 0.1s ease, color 0.15s ease;
   }
@@ -209,21 +221,25 @@
 
   #controls {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     margin-top: 22px;
     width: 100%;
     justify-content: center;
+    flex-wrap: wrap;
   }
 
   button.ctrl {
     border: 1.5px solid #1212124d;
     background: transparent;
     border-radius: 24px;
-    padding: 12px 20px;
+    padding: 12px 16px;
+    min-height: 44px;
+    flex: 1 1 auto;
     font-size: 14px;
     font-weight: 700;
     color: var(--text-dark);
     cursor: pointer;
+    touch-action: manipulation;
     transition: background 0.15s ease, opacity 0.15s ease;
   }
 
@@ -254,7 +270,8 @@
     align-items: center;
     justify-content: center;
     z-index: 10;
-    padding: 24px;
+    padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
+    overflow-y: auto;
   }
 
   #overlay.show { display: flex; }
@@ -285,9 +302,22 @@
     border: none;
     border-radius: 24px;
     padding: 12px 24px;
+    min-height: 44px;
     font-weight: 700;
     font-size: 14px;
     cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  @media (max-width: 360px) {
+    #grid, #solved-board { gap: 6px; }
+    .solved-row .cat-name { font-size: 13px; }
+    .solved-row .cat-items { font-size: 12px; }
+    button.ctrl { padding: 12px 10px; font-size: 13px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }
 
   @media (prefers-color-scheme: dark) {

@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Connections</title>
+<style>
+  :root {
+    --yellow: #f9df6d;
+    --green: #a0c35a;
+    --blue: #b0c4ef;
+    --purple: #ba81c5;
+    --bg: #ffffff;
+    --tile-bg: #efefe6;
+    --tile-selected: #5a594e;
+    --text-dark: #121212;
+    --text-light: #ffffff;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    color: var(--text-dark);
+    overscroll-behavior-y: contain;
+  }
+
+  .app {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 16px 16px 40px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  header {
+    text-align: center;
+    margin: 8px 0 4px;
+    width: 100%;
+  }
+
+  h1 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight: 700;
+    font-size: 34px;
+    margin: 6px 0 2px;
+    letter-spacing: 0.5px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 4px;
+  }
+
+  .instructions {
+    font-size: 13px;
+    color: #777;
+    text-align: center;
+    margin: 10px 0 18px;
+    line-height: 1.4;
+  }
+
+  #solved-board {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .solved-row {
+    width: 100%;
+    border-radius: 10px;
+    padding: 14px 10px;
+    text-align: center;
+    animation: reveal 0.4s ease;
+    color: var(--text-dark);
+  }
+
+  @keyframes reveal {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .solved-row .cat-name {
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .solved-row .cat-items {
+    font-size: 14px;
+    margin-top: 2px;
+  }
+
+  .yellow { background: var(--yellow); }
+  .green { background: var(--green); }
+  .blue { background: var(--blue); }
+  .purple { background: var(--purple); }
+
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .tile {
+    background: var(--tile-bg);
+    border-radius: 10px;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-weight: 700;
+    font-size: 13.5px;
+    line-height: 1.2;
+    padding: 6px;
+    cursor: pointer;
+    user-select: none;
+    border: 2px solid transparent;
+    transition: background 0.15s ease, transform 0.1s ease, color 0.15s ease;
+  }
+
+  .tile:active {
+    transform: scale(0.96);
+  }
+
+  .tile.selected {
+    background: var(--tile-selected);
+    color: var(--text-light);
+  }
+
+  .tile.removing {
+    animation: fadeOut 0.35s ease forwards;
+  }
+
+  @keyframes fadeOut {
+    to { opacity: 0; transform: scale(0.7); }
+  }
+
+  .shake {
+    animation: shake 0.5s ease;
+  }
+
+  @keyframes shake {
+    10%, 90% { transform: translateX(-2px); }
+    20%, 80% { transform: translateX(4px); }
+    30%, 50%, 70% { transform: translateX(-8px); }
+    40%, 60% { transform: translateX(8px); }
+  }
+
+  .bounce {
+    animation: bounce 0.5s ease;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-10px); }
+    50% { transform: translateY(0); }
+    65% { transform: translateY(-5px); }
+    80% { transform: translateY(0); }
+  }
+
+  #message {
+    min-height: 22px;
+    margin-top: 16px;
+    font-weight: 700;
+    font-size: 14px;
+    text-align: center;
+    color: #333;
+  }
+
+  #mistakes {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 18px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--text-dark);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  .dot.used {
+    opacity: 0;
+    transform: scale(0);
+  }
+
+  #controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 22px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  button.ctrl {
+    border: 1.5px solid #1212124d;
+    background: transparent;
+    border-radius: 24px;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-dark);
+    cursor: pointer;
+    transition: background 0.15s ease, opacity 0.15s ease;
+  }
+
+  button.ctrl:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  button.ctrl:active:not(:disabled) {
+    background: #12121214;
+  }
+
+  button.submit {
+    background: var(--text-dark);
+    color: #fff;
+    border-color: var(--text-dark);
+  }
+
+  button.submit:active:not(:disabled) {
+    background: #333;
+  }
+
+  #overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    padding: 24px;
+  }
+
+  #overlay.show { display: flex; }
+
+  .modal {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px 24px;
+    text-align: center;
+    max-width: 360px;
+    width: 100%;
+  }
+
+  .modal h2 {
+    margin: 0 0 8px;
+    font-family: Georgia, serif;
+  }
+
+  .modal p {
+    font-size: 14px;
+    color: #555;
+    margin: 0 0 18px;
+  }
+
+  .modal button {
+    background: var(--text-dark);
+    color: #fff;
+    border: none;
+    border-radius: 24px;
+    padding: 12px 24px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121212;
+      --tile-bg: #2b2b2b;
+      --tile-selected: #dcdcdc;
+      --text-dark: #f0f0f0;
+      --text-light: #121212;
+    }
+    .subtitle, .instructions { color: #aaa; }
+    #message { color: #ddd; }
+    button.ctrl { border-color: #f0f0f04d; }
+    button.ctrl:active:not(:disabled) { background: #ffffff14; }
+    .modal { background: #1e1e1e; }
+    .modal p { color: #bbb; }
+    .solved-row, .tile.selected { color: #121212; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Connections</h1>
+    <div class="subtitle">Create four groups of four!</div>
+  </header>
+
+  <div class="instructions">Find groups of four items that share something in common. Tap to select, then Submit.</div>
+
+  <div id="solved-board"></div>
+  <div id="grid"></div>
+
+  <div id="message"></div>
+
+  <div id="mistakes">
+    Mistakes remaining:
+    <div class="dots" id="dots"></div>
+  </div>
+
+  <div id="controls">
+    <button class="ctrl" id="shuffleBtn">Shuffle</button>
+    <button class="ctrl" id="deselectBtn">Deselect all</button>
+    <button class="ctrl submit" id="submitBtn" disabled>Submit</button>
+  </div>
+</div>
+
+<div id="overlay">
+  <div class="modal">
+    <h2 id="modalTitle"></h2>
+    <p id="modalText"></p>
+    <button id="modalBtn">Close</button>
+  </div>
+</div>
+
+<script>
+const CATEGORIES = [
+  {
+    name: "Wedding Vibes",
+    color: "yellow",
+    items: ["RINGS", "DRESS", "VOWS", "HONEYMOON"]
+  },
+  {
+    name: "Holidays",
+    color: "green",
+    items: ["ROME", "RHODES", "CYPRUS", "CRETE"]
+  },
+  {
+    name: "Subjects Kat Teaches",
+    color: "blue",
+    items: ["POMPEII", "THE ODYSSEY", "WW1", "ATHENS"]
+  },
+  {
+    name: "Contains C & K",
+    color: "purple",
+    items: ["COCKTAIL", "NECKLACE", "BLACKOUT", "BARRACKS"]
+  }
+];
+
+const MAX_MISTAKES = 4;
+
+let tiles = [];       // {word, catIndex}
+let selected = [];    // words currently selected
+let solved = [];      // catIndex list already solved
+let mistakesUsed = 0;
+let gameOver = false;
+
+function buildTiles() {
+  tiles = [];
+  CATEGORIES.forEach((cat, i) => {
+    cat.items.forEach(word => tiles.push({ word, catIndex: i }));
+  });
+  shuffleArray(tiles);
+}
+
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+function render() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  tiles
+    .filter(t => !solved.includes(t.catIndex))
+    .forEach(t => {
+      const div = document.createElement('div');
+      div.className = 'tile' + (selected.includes(t.word) ? ' selected' : '');
+      div.textContent = t.word;
+      div.dataset.word = t.word;
+      div.addEventListener('click', () => onTileClick(t.word));
+      grid.appendChild(div);
+    });
+
+  document.getElementById('submitBtn').disabled = selected.length !== 4 || gameOver;
+  document.getElementById('deselectBtn').disabled = selected.length === 0 || gameOver;
+
+  renderDots();
+}
+
+function renderDots() {
+  const dots = document.getElementById('dots');
+  dots.innerHTML = '';
+  for (let i = 0; i < MAX_MISTAKES; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i < mistakesUsed ? ' used' : '');
+    dots.appendChild(d);
+  }
+}
+
+function onTileClick(word) {
+  if (gameOver) return;
+  if (selected.includes(word)) {
+    selected = selected.filter(w => w !== word);
+  } else {
+    if (selected.length >= 4) return;
+    selected.push(word);
+  }
+  render();
+}
+
+function setMessage(text, timeout) {
+  const el = document.getElementById('message');
+  el.textContent = text;
+  if (timeout) {
+    setTimeout(() => { if (el.textContent === text) el.textContent = ''; }, timeout);
+  }
+}
+
+function onSubmit() {
+  if (selected.length !== 4 || gameOver) return;
+
+  const selectedTiles = tiles.filter(t => selected.includes(t.word));
+  const catIndex = selectedTiles[0].catIndex;
+  const allSameCategory = selectedTiles.every(t => t.catIndex === catIndex);
+
+  if (allSameCategory) {
+    solved.push(catIndex);
+    selected = [];
+    renderSolvedRow(catIndex);
+    render();
+    if (solved.length === CATEGORIES.length) {
+      endGame(true);
+    }
+    return;
+  }
+
+  // count max overlap with any single category for "one away" hint
+  const counts = {};
+  selectedTiles.forEach(t => counts[t.catIndex] = (counts[t.catIndex] || 0) + 1);
+  const maxCount = Math.max(...Object.values(counts));
+
+  mistakesUsed++;
+  renderDots();
+  shakeGrid();
+
+  if (maxCount === 3) {
+    setMessage('One away...', 1800);
+  } else {
+    setMessage('Not quite. Try again!', 1800);
+  }
+
+  if (mistakesUsed >= MAX_MISTAKES) {
+    endGame(false);
+  }
+}
+
+function shakeGrid() {
+  const grid = document.getElementById('grid');
+  const selectedEls = [...grid.querySelectorAll('.tile.selected')];
+  selectedEls.forEach(el => {
+    el.classList.add('shake');
+    el.addEventListener('animationend', () => el.classList.remove('shake'), { once: true });
+  });
+}
+
+function renderSolvedRow(catIndex) {
+  const cat = CATEGORIES[catIndex];
+  const board = document.getElementById('solved-board');
+  const row = document.createElement('div');
+  row.className = 'solved-row ' + cat.color;
+  row.innerHTML = `<div class="cat-name">${cat.name}</div><div class="cat-items">${cat.items.join(', ')}</div>`;
+  board.appendChild(row);
+}
+
+function endGame(won) {
+  gameOver = true;
+  render();
+  const overlay = document.getElementById('overlay');
+  const title = document.getElementById('modalTitle');
+  const text = document.getElementById('modalText');
+
+  if (won) {
+    title.textContent = 'Congratulations!';
+    text.textContent = `You solved it with ${mistakesUsed} mistake${mistakesUsed === 1 ? '' : 's'}.`;
+  } else {
+    title.textContent = 'Next time!';
+    text.textContent = "Here's today's answers:";
+    // reveal remaining categories
+    CATEGORIES.forEach((cat, i) => {
+      if (!solved.includes(i)) {
+        solved.push(i);
+        renderSolvedRow(i);
+      }
+    });
+    render();
+  }
+  overlay.classList.add('show');
+}
+
+function onShuffle() {
+  const remaining = tiles.filter(t => !solved.includes(t.catIndex));
+  shuffleArray(remaining);
+  const solvedTiles = tiles.filter(t => solved.includes(t.catIndex));
+  tiles = [...solvedTiles, ...remaining];
+  render();
+  const grid = document.getElementById('grid');
+  grid.classList.add('bounce');
+  grid.addEventListener('animationend', () => grid.classList.remove('bounce'), { once: true });
+}
+
+function onDeselect() {
+  selected = [];
+  render();
+}
+
+document.getElementById('submitBtn').addEventListener('click', onSubmit);
+document.getElementById('shuffleBtn').addEventListener('click', onShuffle);
+document.getElementById('deselectBtn').addEventListener('click', onDeselect);
+document.getElementById('modalBtn').addEventListener('click', () => {
+  document.getElementById('overlay').classList.remove('show');
+});
+
+buildTiles();
+render();
+</script>
+</body>
+</html>
